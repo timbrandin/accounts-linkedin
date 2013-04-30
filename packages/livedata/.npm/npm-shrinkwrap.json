@@ -2,7 +2,7 @@
   "dependencies": {
     "sockjs": {
       "version": "0.3.7",
-      "from": "https://registry.npmjs.org/sockjs/-/sockjs-0.3.7.tgz",
+      "from": "sockjs@0.3.7",
       "resolved": "https://registry.npmjs.org/sockjs/-/sockjs-0.3.7.tgz",
       "dependencies": {
         "node-uuid": {
