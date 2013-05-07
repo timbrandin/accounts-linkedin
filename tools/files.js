@@ -6,6 +6,7 @@
 
 var fs = require("fs");
 var path = require('path');
+var os = require('os');
 var _ = require('underscore');
 var zlib = require("zlib");
 var tar = require("tar");
@@ -455,8 +456,7 @@ _.extend(exports, {
     fs.rmdirSync(tempDir);
   },
 
-  // Tar-gzips a directory, returning a stream that can then
-  // be piped as needed.  The tar archive will contain a top-level
+  // Tar-gzips a directory, returning a stream that can then // be piped as needed.  The tar archive will contain a top-level
   // directory named after dirPath.
   createTarGzStream: function (dirPath) {
     return fstream.Reader({ path: dirPath, type: 'Directory' }).pipe(
@@ -485,6 +485,29 @@ _.extend(exports, {
     var future = new Future;
     // can't just use Future.wrap, because we want to return "body", not
     // "response".
+
+    // Get some kind of User Agent: environment information. 
+    var userAgentHash = {
+      'User-Agent': [
+          os.platform(),
+          os.release(), 
+          os.arch(), 
+          os.type(), 
+          Meteor.release
+        ].join(' ')
+      };
+
+    if (_.isObject(urlOrOptions)) {
+      urlOrOptions.headers = urlOrOptions.headers ?
+                                _.extend(urlOrOptions.headers, userAgentHash) :
+                                userAgentHash;
+    } else {
+      urlOrOptions = {
+        url: urlOrOptions,
+        headers: userAgentHash
+      };
+    }
+
     request(urlOrOptions, function (error, response, body) {
       if (error)
         future.throw(new files.OfflineError(error));
