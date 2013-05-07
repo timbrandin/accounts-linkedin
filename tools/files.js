@@ -7,6 +7,7 @@
 var fs = require("fs");
 var path = require('path');
 var os = require('os');
+var util = require('util');
 var _ = require('underscore');
 var zlib = require("zlib");
 var tar = require("tar");
@@ -456,7 +457,8 @@ _.extend(exports, {
     fs.rmdirSync(tempDir);
   },
 
-  // Tar-gzips a directory, returning a stream that can then // be piped as needed.  The tar archive will contain a top-level
+  // Tar-gzips a directory, returning a stream that can then
+  // be piped as needed.  The tar archive will contain a top-level
   // directory named after dirPath.
   createTarGzStream: function (dirPath) {
     return fstream.Reader({ path: dirPath, type: 'Directory' }).pipe(
@@ -486,26 +488,32 @@ _.extend(exports, {
     // can't just use Future.wrap, because we want to return "body", not
     // "response".
 
-    // Get some kind of User Agent: environment information. 
-    var userAgentHash = {
-      'User-Agent': [
-          os.platform(),
-          os.release(), 
-          os.arch(), 
-          os.type(), 
-          Meteor.release
-        ].join(' ')
+    if (urlOrOptions.hasOwnProperty('meteorMeta')) {
+      urlOrOptions = _.clone(urlOrOptions); // we are going to change it in future
+
+      // Get meteor app release version
+      var appVersion = urlOrOptions.meteorMeta.appReleaseVersion;
+      if (appVersion === 'none')
+        appVersion = 'checkout';
+
+      // Get some kind of User Agent: environment information.
+      var ua = util.format('Meteor/%s OS/%s (%s; %s; %s;)',
+                appVersion, os.platform(), os.type(), os.release(), os.arch());
+
+      var headers = {
+        'User-Agent': ua
       };
 
-    if (_.isObject(urlOrOptions)) {
-      urlOrOptions.headers = urlOrOptions.headers ?
-                                _.extend(urlOrOptions.headers, userAgentHash) :
-                                userAgentHash;
-    } else {
-      urlOrOptions = {
-        url: urlOrOptions,
-        headers: userAgentHash
-      };
+      if (_.isObject(urlOrOptions)) {
+        urlOrOptions.headers = urlOrOptions.headers ?
+        _.extend(headers, urlOrOptions.headers) :
+        headers;
+      } else {
+        urlOrOptions = {
+          url: urlOrOptions,
+          headers: headers
+        };
+      }
     }
 
     request(urlOrOptions, function (error, response, body) {
