@@ -489,13 +489,17 @@ _.extend(exports, {
     // "response".
 
     if (urlOrOptions.hasOwnProperty('meteorMeta')) {
-      urlOrOptions = _.clone(urlOrOptions); // we are going to change it in future
+      urlOrOptions = _.clone(urlOrOptions); // we are going to change it
 
-      // Get meteor app release version
-      var appVersion = urlOrOptions.meteorMeta.appReleaseVersion;
+      // Get meteor app release version: if specified in command line args, take
+      // releaseVersion, if not specified, try app version taken from .meteor
+      var appVersion = urlOrOptions.meteorMeta.releaseVersion;
+
+      if (appVersion === 'none')
+        appVersion = urlOrOptions.meteorMeta.appReleaseVersion;
+
       if (appVersion === 'none')
         appVersion = 'checkout';
-      console.log(urlOrOptions.meteorMeta);
 
       // Get some kind of User Agent: environment information.
       var ua = util.format('Meteor/%s OS/%s (%s; %s; %s;)',
@@ -505,16 +509,9 @@ _.extend(exports, {
         'User-Agent': ua
       };
 
-      if (_.isObject(urlOrOptions)) {
-        urlOrOptions.headers = urlOrOptions.headers ?
-        _.extend(headers, urlOrOptions.headers) :
-        headers;
-      } else {
-        urlOrOptions = {
-          url: urlOrOptions,
-          headers: headers
-        };
-      }
+      urlOrOptions.headers = urlOrOptions.headers ?
+                            _.extend(headers, urlOrOptions.headers) :
+                            headers;
     }
 
     request(urlOrOptions, function (error, response, body) {
