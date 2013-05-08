@@ -495,6 +495,7 @@ _.extend(exports, {
       var appVersion = urlOrOptions.meteorMeta.appReleaseVersion;
       if (appVersion === 'none')
         appVersion = 'checkout';
+      console.log(urlOrOptions.meteorMeta);
 
       // Get some kind of User Agent: environment information.
       var ua = util.format('Meteor/%s OS/%s (%s; %s; %s;)',
