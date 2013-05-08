@@ -488,34 +488,42 @@ _.extend(exports, {
     // can't just use Future.wrap, because we want to return "body", not
     // "response".
 
-    if (urlOrOptions.hasOwnProperty('meteorReleaseContext')) {
-      urlOrOptions = _.clone(urlOrOptions); // we are going to change it
+    urlOrOptions = _.clone(urlOrOptions); // we are going to change it
+    var appVersion, globalVersion;
+    try {
+      appVersion = globalVersion = getToolsVersion();
+    } catch(e) {
+      appVersion = globalVersion = 'checkout';
+    }
 
+    if (urlOrOptions.hasOwnProperty('meteorReleaseContext')) {
       // Get meteor app release version: if specified in command line args, take
       // releaseVersion, if not specified, try app version taken from .meteor
-      // and try the global version if everything else fails
+      // and try the global Meteor version if everything else fails
       var meteorReleaseContext = urlOrOptions.meteorReleaseContext;
-      var appVersion = meteorReleaseContext.releaseVersion;
-      var globalVersion = meteorReleaseContext.globalReleaseVersion;
+      appVersion = meteorReleaseContext.releaseVersion;
+      globalVersion = meteorReleaseContext.appReleaseVersion;
+
+      console.log(meteorReleaseContext);
 
       if (globalVersion === 'none')
         globalVersion = 'checkout';
 
       if (appVersion === 'none')
-        appVersion = meteorReleaseContext.appReleaseVersion;
-
-      if (appVersion === 'none')
         appVersion = globalVersion;
-
-      // Get some kind of User Agent: environment information.
-      var ua = util.format('Meteor/%s (%s installed;) OS/%s (%s; %s; %s;)',
-                appVersion, globalVersion,
-                os.platform(), os.type(), os.release(), os.arch());
-
-      var headers = {'User-Agent': ua };
-
-      urlOrOptions.headers = _.extend(headers, urlOrOptions.headers);
     }
+
+    // Get some kind of User Agent: environment information.
+    var ua = util.format('Meteor/%s (%s installed;) OS/%s (%s; %s; %s;)',
+              appVersion, globalVersion,
+              os.platform(), os.type(), os.release(), os.arch());
+
+    var headers = {'User-Agent': ua };
+
+    if (_.isObject(urlOrOptions))
+      urlOrOptions.headers = _.extend(headers, urlOrOptions.headers);
+    else
+      urlOrOptions = { url: urlOrOptions, headers: headers };
 
     request(urlOrOptions, function (error, response, body) {
       if (error)
