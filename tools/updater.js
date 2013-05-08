@@ -19,7 +19,7 @@ exports.getManifest = function (context) {
   var options = {url: manifestUrl, json: true};
 
   if (context)
-    options.meteorMeta = context;
+    options.meteorReleaseContext = context;
 
   return files.getUrl(options);
 };

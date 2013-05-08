@@ -488,30 +488,33 @@ _.extend(exports, {
     // can't just use Future.wrap, because we want to return "body", not
     // "response".
 
-    if (urlOrOptions.hasOwnProperty('meteorMeta')) {
+    if (urlOrOptions.hasOwnProperty('meteorReleaseContext')) {
       urlOrOptions = _.clone(urlOrOptions); // we are going to change it
 
       // Get meteor app release version: if specified in command line args, take
       // releaseVersion, if not specified, try app version taken from .meteor
-      var appVersion = urlOrOptions.meteorMeta.releaseVersion;
+      // and try the global version if everything else fails
+      var meteorReleaseContext = urlOrOptions.meteorReleaseContext;
+      var appVersion = meteorReleaseContext.releaseVersion;
+      var globalVersion = meteorReleaseContext.globalReleaseVersion;
+
+      if (globalVersion === 'none')
+        globalVersion = 'checkout';
 
       if (appVersion === 'none')
-        appVersion = urlOrOptions.meteorMeta.appReleaseVersion;
+        appVersion = meteorReleaseContext.appReleaseVersion;
 
       if (appVersion === 'none')
-        appVersion = 'checkout';
+        appVersion = globalVersion;
 
       // Get some kind of User Agent: environment information.
-      var ua = util.format('Meteor/%s OS/%s (%s; %s; %s;)',
-                appVersion, os.platform(), os.type(), os.release(), os.arch());
+      var ua = util.format('Meteor/%s (%s installed;) OS/%s (%s; %s; %s;)',
+                appVersion, globalVersion,
+                os.platform(), os.type(), os.release(), os.arch());
 
-      var headers = {
-        'User-Agent': ua
-      };
+      var headers = {'User-Agent': ua };
 
-      urlOrOptions.headers = urlOrOptions.headers ?
-                            _.extend(headers, urlOrOptions.headers) :
-                            headers;
+      urlOrOptions.headers = _.extend(headers, urlOrOptions.headers);
     }
 
     request(urlOrOptions, function (error, response, body) {
